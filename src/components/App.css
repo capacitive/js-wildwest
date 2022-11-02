@@ -1,17 +1,88 @@
 .game {
   max-width: 500px;
+  max-height: 400px;
   margin: 0 auto;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 20px;
-  color: #333;
+  font-family: "Carnivalee";
+  font-size: 30px;
+  color: #fff;
+  position: relative;
+}
+
+.splash {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(-10%, -1%);
+}
+
+.fadeOut {
+  animation: fadeOut ease 2s;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+
+.fadeIn {
+  animation: fadeIn ease 2s;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+
+.hide {
+  visibility: hidden;
+  animation: moveAside ease 1s;
+}
+
+.moveAside {
+  transform: translate(-100%, -100%);
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes moveAside {
+  0% {
+    position: fixed;
+  }
+  100% {
+    transform: translate(-100%, -100%);
+  }
+}
+
+.overlay {
+  z-index: 9;
+  background: #009938;
+}
+
+@font-face {
+  font-family: "Carnivalee";
+  src: url("http://localhost:3000/fonts/Carnivalee.ttf");
 }
 
 .body {
   display: flex;
+  color: white;
+  background-color: gray;
 }
 
 .help {
-  color: #666;
+  color: white;
   margin: 10px;
   text-align: center;
 }
@@ -30,7 +101,7 @@
 }
 
 .star {
-	display: inline-block;
+  display: inline-block;
   margin: 0 15px;
 }
 
@@ -48,15 +119,30 @@
   font-size: 25px;
 }
 
-.number:focus, .number:active {
+.number:focus,
+.number:active {
   outline: none;
   border: thin solid #ddd;
 }
 
 .timer {
-	color: #666;
+  color: white;
   margin-top: 3px;
   margin-left: 3px;
+  float: left;
+}
+
+.exit {
+  float: right;
+  margin-top: 12px;
+  font-family: "Carnivalee";
+  font-size: 20px;
+}
+
+.playagain {
+  margin-top: 12px;
+  font-family: "Carnivalee";
+  font-size: 20px;
 }
 
 .game-done .message {
