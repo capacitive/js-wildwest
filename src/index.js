@@ -1,8 +1,5 @@
-import React from 'react'
-import { render } from 'react-dom'
-import App from './components/App'
+import React from "react";
+import { render } from "react-dom";
+import JSWildWest from "./components/JSWildWest";
 
-render(
-	<App />,
-  document.getElementById('app')
-)
+render(<JSWildWest />, document.getElementById("app"));

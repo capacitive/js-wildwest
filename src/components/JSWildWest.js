@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import PropTypes from "prop-types";
 
-const MIN_STARS = -5;
-const MAX_STARS = 6;
+const MIN_STARS = 1;
+const MAX_STARS = 10;
 
 const StarsDisplay = (props) => {
   return (
@@ -29,46 +29,54 @@ const PlayNumber = (props) => (
   </button>
 );
 
-const PlayAgain = (props) => (
-  <button onClick={props.onClick} className="playagain">
-    PLAY AGAIN
-  </button>
-);
-
-function SplashImage() {
-  return (
-    <div
-      className="splash fadeIn overlay"
-      onClick={() => {
-        let audio = new Audio("./audio/js-wild-west-intro.mp3");
-        audio.play();
-
-        setTimeout(() => {
-          audio.pause();
-        }, 2650);
-
-        let splashScreen = document.querySelector(".splash");
-        splashScreen.classList.toggle("fadeOut");
-        splashScreen.classList.toggle("hide");
-      }}>
-      <img
-        src="./images/wild-west-JS-final.jpg"
-        width="600px"
-        alt="wild west"
-      />
-    </div>
-  );
+function GameStatusSwitch(gameStatus) {
+  switch (gameStatus) {
+    case "lost":
+      return "Game Over!";
+    case "won":
+      new Audio("./audio/yeehaw.wav").play();
+      return "Yeehaw!";
+  }
 }
 
-function App() {
+const PlayAgain = (props) => (
+  <div>
+    <div className="gameOutcome" style={{ color: props.gameStatus === "lost" ? "red" : "green" }}>
+      {GameStatusSwitch(props.gameStatus)}
+    </div>
+    <button onClick={props.onClick} className="playagain">
+      PLAY AGAIN
+    </button>
+  </div>
+);
+
+const SplashImage = (props) => (
+  <div className="splash fadeIn overlay" onClick={props.onClick}>
+    <img src="./images/wild-west-JS-final.jpg" width="600px" alt="wild west" />
+  </div>
+);
+
+const Game = (props) => {
   const [stars, setStars] = useState(utils.random(MIN_STARS, MAX_STARS));
-  const [availableNumbers, setAvailableNumbers] = useState(
-    utils.range(MIN_STARS, MAX_STARS)
-  );
+  const [availableNumbers, setAvailableNumbers] = useState(utils.range(MIN_STARS, MAX_STARS));
   const [candidateNumbers, setCandidateNumbers] = useState([]);
+  const [secondsLeft, setSecondsLeft] = useState(null);
+
+  useEffect(() => {
+    if (secondsLeft > 0 && availableNumbers.length > 0 && secondsLeft !== null) {
+      const timerId = setTimeout(() => {
+        setSecondsLeft(secondsLeft - 1);
+      }, 1000);
+      return () => clearTimeout(timerId);
+    }
+
+    //console.info(`Rendering done`);
+    //return () => console.info(`Component is about to rerender`);
+  });
 
   const candidatesAreWrong = utils.sum(candidateNumbers) > stars;
-  const gameIsDone = availableNumbers.length === 1;
+
+  const gameStatus = availableNumbers.length === 0 ? "won" : secondsLeft === 0 ? "lost" : "active";
 
   const numberStatus = (number) => {
     if (!availableNumbers.includes(number)) {
@@ -83,7 +91,7 @@ function App() {
   };
 
   const onNumberClick = (number, currentStatus) => {
-    if (currentStatus == "used") {
+    if (gameStatus !== "active" || currentStatus == "used") {
       return;
     }
 
@@ -95,9 +103,7 @@ function App() {
     if (utils.sum(newCadidateNumbers) !== stars) {
       setCandidateNumbers(newCadidateNumbers);
     } else {
-      const newAvailableNumbers = availableNumbers.filter(
-        (n) => !newCadidateNumbers.includes(n)
-      );
+      const newAvailableNumbers = availableNumbers.filter((n) => !newCadidateNumbers.includes(n));
       //redraw number of stars (from what's available)
       setStars(utils.randomSumIn(newAvailableNumbers, MAX_STARS));
       setAvailableNumbers(newAvailableNumbers);
@@ -106,9 +112,23 @@ function App() {
   };
 
   const resetGame = () => {
+    let audio = new Audio("./audio/js-wild-west-intro.mp3");
+    audio.play();
+
+    setTimeout(() => {
+      audio.pause();
+    }, 2650);
+
+    let splashScreen = document.querySelector(".splash");
+    if (splashScreen) {
+      splashScreen.classList.toggle("fadeOut");
+      splashScreen.classList.toggle("hide");
+    }
+
     setStars(utils.random(MIN_STARS, MAX_STARS));
     setAvailableNumbers(utils.range(MIN_STARS, MAX_STARS));
     setCandidateNumbers([]);
+    setSecondsLeft(MAX_STARS + 10);
   };
 
   return (
@@ -118,8 +138,8 @@ function App() {
       </div>
       <div className="body">
         <div className="left">
-          {gameIsDone ? (
-            <PlayAgain onClick={resetGame} />
+          {gameStatus !== "active" ? (
+            <PlayAgain onClick={props.startNewGame} gameStatus={gameStatus} />
           ) : (
             <StarsDisplay count={stars} />
           )}
@@ -136,24 +156,37 @@ function App() {
         </div>
       </div>
       <div>
-        <div className="timer">Time Remaining: {MAX_STARS + 1}</div>
+        <div className="timer">
+          Time Remaining: <div className="countDown">{secondsLeft}</div>
+        </div>
         <button
           title="exit"
           type="reset"
           className="exit"
           onClick={() => {
             let splashScreen = document.querySelector(".splash");
-            splashScreen.classList.replace("fadeOut", "fadeIn");
-            splashScreen.classList.toggle("hide");
+            if (splashScreen) {
+              splashScreen.classList.replace("fadeOut", "fadeIn");
+              splashScreen.classList.toggle("hide");
+            }
             resetGame();
           }}>
           EXIT THE SALOON
         </button>
       </div>
-      <SplashImage />
+      <SplashImage onClick={resetGame} />
     </div>
   );
+};
+
+function JSWildWest() {
+  const [gameId, setGameId] = useState(1);
+  return <Game key={gameId} startNewGame={() => setGameId(gameId + 1)} />;
 }
+
+Game.propTypes = {
+  startNewGame: PropTypes.func.isRequired,
+};
 
 StarsDisplay.propTypes = {
   count: PropTypes.number.isRequired,
@@ -167,10 +200,14 @@ PlayNumber.propTypes = {
 
 PlayAgain.propTypes = {
   onClick: PropTypes.func.isRequired,
+  gameStatus: PropTypes.string.isRequired,
+};
+
+SplashImage.propTypes = {
+  onClick: PropTypes.func.isRequired,
 };
 
 // Color Theme
-// eslint-disable-next-line no-unused-vars
 const colors = {
   available: "lightgray",
   used: "lightgreen",
@@ -213,4 +250,4 @@ const utils = {
   },
 };
 
-export default App;
+export default JSWildWest;

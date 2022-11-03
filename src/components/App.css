@@ -132,6 +132,10 @@
   float: left;
 }
 
+.countDown {
+  font-size: 50px;
+}
+
 .exit {
   float: right;
   margin-top: 12px;
@@ -143,6 +147,12 @@
   margin-top: 12px;
   font-family: "Carnivalee";
   font-size: 20px;
+}
+
+.gameOutcome {
+  margin-top: 12px;
+  font-family: "Carnivalee";
+  font-size: 55px;
 }
 
 .game-done .message {
