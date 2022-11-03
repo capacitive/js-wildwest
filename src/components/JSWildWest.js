@@ -32,6 +32,7 @@ const PlayNumber = (props) => (
 function GameStatusSwitch(gameStatus) {
   switch (gameStatus) {
     case "lost":
+      new Audio("./audio/dagnabbit.mp3").play();
       return "Game Over!";
     case "won":
       new Audio("./audio/yeehaw.wav").play();
@@ -45,7 +46,7 @@ const PlayAgain = (props) => (
       {GameStatusSwitch(props.gameStatus)}
     </div>
     <button onClick={props.onClick} className="playagain">
-      PLAY AGAIN
+      RELOAD
     </button>
   </div>
 );
@@ -56,7 +57,8 @@ const SplashImage = (props) => (
   </div>
 );
 
-const Game = (props) => {
+//custom hook:
+const useGameState = () => {
   const [stars, setStars] = useState(utils.random(MIN_STARS, MAX_STARS));
   const [availableNumbers, setAvailableNumbers] = useState(utils.range(MIN_STARS, MAX_STARS));
   const [candidateNumbers, setCandidateNumbers] = useState([]);
@@ -73,6 +75,48 @@ const Game = (props) => {
     //console.info(`Rendering done`);
     //return () => console.info(`Component is about to rerender`);
   });
+
+  const setGameState = (newCandidateNumbers) => {
+    if (utils.sum(newCandidateNumbers) !== stars) {
+      setCandidateNumbers(newCandidateNumbers);
+    } else {
+      const newAvailableNumbers = availableNumbers.filter((n) => !newCandidateNumbers.includes(n));
+      //redraw number of stars (from what's available)
+      setStars(utils.randomSumIn(newAvailableNumbers, MAX_STARS));
+      setAvailableNumbers(newAvailableNumbers);
+      setCandidateNumbers([]);
+    }
+  };
+
+  const startGame = () => {
+    setSecondsLeft(MAX_STARS + 1);
+  };
+
+  const pauseGame = () => {
+    setSecondsLeft(null);
+  };
+
+  return {
+    stars,
+    availableNumbers,
+    candidateNumbers,
+    secondsLeft,
+    setGameState,
+    startGame,
+    pauseGame,
+  };
+};
+
+const Game = (props) => {
+  const {
+    stars,
+    availableNumbers,
+    candidateNumbers,
+    secondsLeft,
+    setGameState,
+    startGame,
+    pauseGame,
+  } = useGameState();
 
   const candidatesAreWrong = utils.sum(candidateNumbers) > stars;
 
@@ -95,20 +139,12 @@ const Game = (props) => {
       return;
     }
 
-    const newCadidateNumbers =
+    const newCandidateNumbers =
       currentStatus === "available"
         ? candidateNumbers.concat(number)
         : candidateNumbers.filter((cn) => cn !== number);
 
-    if (utils.sum(newCadidateNumbers) !== stars) {
-      setCandidateNumbers(newCadidateNumbers);
-    } else {
-      const newAvailableNumbers = availableNumbers.filter((n) => !newCadidateNumbers.includes(n));
-      //redraw number of stars (from what's available)
-      setStars(utils.randomSumIn(newAvailableNumbers, MAX_STARS));
-      setAvailableNumbers(newAvailableNumbers);
-      setCandidateNumbers([]);
-    }
+    setGameState(newCandidateNumbers);
   };
 
   const resetGame = () => {
@@ -121,14 +157,24 @@ const Game = (props) => {
 
     let splashScreen = document.querySelector(".splash");
     if (splashScreen) {
-      splashScreen.classList.toggle("fadeOut");
-      splashScreen.classList.toggle("hide");
-    }
+      splashScreen.classList.replace("fadeIn", "fadeOut");
+      setTimeout(() => {
+        splashScreen.classList.toggle("hide");
+        startGame();
+      }, 1000);
 
-    setStars(utils.random(MIN_STARS, MAX_STARS));
-    setAvailableNumbers(utils.range(MIN_STARS, MAX_STARS));
-    setCandidateNumbers([]);
-    setSecondsLeft(MAX_STARS + 10);
+      setTimeout(() => {
+        startGame();
+      }, 1000);
+    }
+  };
+
+  const showSplashImage = () => {
+    let splashScreen = document.querySelector(".splash");
+    if (splashScreen) {
+      splashScreen.classList.toggle("hide");
+      splashScreen.classList.replace("fadeOut", "fadeIn");
+    }
   };
 
   return (
@@ -169,7 +215,7 @@ const Game = (props) => {
               splashScreen.classList.replace("fadeOut", "fadeIn");
               splashScreen.classList.toggle("hide");
             }
-            resetGame();
+            pauseGame();
           }}>
           EXIT THE SALOON
         </button>
